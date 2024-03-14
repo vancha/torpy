@@ -1,9 +1,8 @@
 from enum import Enum
-
+import time
 import Utils
 import Peer
 import Message
-import Client  
 from Tracker import Tracker, TrackerResponseType
 import bencodepy
  
@@ -21,13 +20,17 @@ class Torpy:
 
     def __init__(self, metainfo_file_location, peer_id):
         self.parsed_metainfo_file = Torpy.parse_metainfo_file(metainfo_file_location)
+        pieces = self.parsed_metainfo_file[b'info'][b'pieces']
         self.tracker_response = Tracker.send_tracker_request(self.parsed_metainfo_file)
-        print(f'Tracker response: {self.tracker_response}')
-        #if we got an actual peer list(with a sucessful tracker response), start the peer wire protocol
-        self.start_peer_wire_protocol()
 
     #gets peers from self.tracker_response, opens a thread for each of them with a call to peer.connect
     def start_peer_wire_protocol(self):
-        pass
+        try:
+            self.block_manager  = BlockManager() 
+            self.peer_manager   = PeerManager(self.tracker_response, self.block_manager)
+            while self.peer_manager.has_active_peers() and self.block_manager.not_finished_downloading():
+                self.peer_manager.update()#?or any other method that actually keeps track of the peers. Create this peer manager!
+        except KeyboardInterrupt:
+            print('quitting')
 
     
