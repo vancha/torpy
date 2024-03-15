@@ -15,15 +15,35 @@ class TrackerResponse:
         pass
 
 class Tracker:
+    def info_to_info_hash_bytes(info):
+        _encoded_value  = bencodepy.encode(info)
+        info_hash       = hashlib.sha1(_encoded_value).hexdigest()
+        info_hash       = bytearray.fromhex(info_hash)
+        return bytes(info_hash)
+
+    def info_to_urlencoded_info_hash(info):
+        _encoded_value  = bencodepy.encode(info)
+        info_hash       = hashlib.sha1(_encoded_value).hexdigest()
+        print(f'hexdigest: {info_hash}')
+        #info_hash       = bytearray.fromhex(info_hash)
+        print(f'as bytearr: {info_hash}')
+        #return bytes(info_hash)
+        #print(f'as bytes: {bytes(info_hash)}')
+        info_hash       = urllib.parse.quote(info_hash)
+        info_hash       = urllib.parse.quote(bytearray.fromhex(info_hash))
+        #print(f'result: {info_hash}')
+        return info_hash
+
 
     #a dict that must always have a field called type
     def send_tracker_request(parsed_metainfo_file):
         announce_url    = parsed_metainfo_file[b'announce'].decode('utf-8')
 
-        _info_value     = parsed_metainfo_file[b'info']
-        _encoded_value  = bencodepy.encode(_info_value)
-        info_hash       = hashlib.sha1(_encoded_value).hexdigest()
-        info_hash       = urllib.parse.quote(bytearray.fromhex(info_hash))
+        #_info_value     = parsed_metainfo_file[b'info']
+        #_encoded_value  = bencodepy.encode(_info_value)
+        #info_hash       = hashlib.sha1(_encoded_value).hexdigest()
+        #info_hash       = urllib.parse.quote(bytearray.fromhex(info_hash))
+        info_hash       = Tracker.info_to_urlencoded_info_hash(parsed_metainfo_file[b'info'])
         port            = 6881
         try:
             port = parsed_metainfo_file[b'port']

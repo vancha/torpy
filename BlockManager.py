@@ -1,3 +1,5 @@
+from itertools import batched
+
 class Piece:
     pass
 
@@ -7,21 +9,30 @@ class BlockManager:
     def get_stored_pieces(self):
         pass
 
-    #maybe this is synonymous with "get_missing_pieces", or somethign that can be named "has missing pieces"
-    def finished_downloading(self):
-        return False
 
     def get_piece_length(self):
         return self.piece_length
 
-    def __init__(self, piece_length):
-        self.piece_length = piece_length
+    def __init__(self, parsed_metainfo_file):#piece_length):
+        self.piece_length           = parsed_metainfo_file[b'info'][b'piece length']
 
-        #or maybe call this self.pieces?
+        #converts byte hashes to string, those seem more useful
+        _pieces                 = parsed_metainfo_file[b'info'][b'pieces']
+        _pieces                 = [piece_hash for piece_hash in batched(_pieces, 20)]
+        for index, piece_hash in enumerate(_pieces):
+            _pieces[index] = ''.join(format(x, '02x') for x in piece_hash)
+        self.pieces = _pieces
+        self.downloaded_pieces = [False for piece in self.pieces]
+
+        self.outstanding_requests   = []
         self.data = self.get_stored_pieces()
+
+    def requested(block):
+        #update outstanding requests
+        pass
 
     def add_block(self, block):
         pass
 
-    def get_missing_pieces(self):
-        pass
+    def has_missing_pieces(self):
+        return False in self.downloaded_pieces
