@@ -1,11 +1,7 @@
 from enum import Enum
-import time
-import Utils
-import Peer
 import Message
 from Tracker import Tracker, TrackerResponseType
 import bencodepy
-from BlockManager import BlockManager 
 from PeerManager import PeerManager
 
 #Torrent client
