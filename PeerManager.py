@@ -9,7 +9,6 @@ can generate peer connections based on the tracker response.
 It tries to keep a buch of peers downloading, and kills the peers which are no longer active. can request more peers from the tracker.
 Also occasionally checks if peers have downloaded new pieces/blocks, and if so, adds them to the blockmanager.
 '''
-    
 
 class PeerManager:
     def __init__(self, tracker_response, parsed_metainfo_file):

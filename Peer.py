@@ -1,6 +1,6 @@
 from Tracker import Tracker
 from threading import Thread
-from Message import Message
+from Message import Message, MessageType
 import Constants
 import socket
 import ipaddress
@@ -59,17 +59,37 @@ class Peer:
             return False
             
     def handle_message(self, msg):
-        print(f'')
-        #get msg type, depending on type, parse it's contents
-    
+        msg_type = msg.get_type()
+        
+        if msg_type == MessageType.KEEPALIVE:
+            print('received keepalive message')
+        elif msg_type == MessageType.CHOKE:
+            print('received choke message')
+        elif msg_type == MessageType.UNCHOKE:
+            print('received unchoke message')
+        elif msg_type == MessageType.INTERESTED:
+            print('received interested message')
+        elif msg_type == MessageType.NOT_INTERESTED:
+            print('received not interested message')
+        elif msg_type == MessageType.HAVE:
+            print('received have message')
+        elif msg_type == MessageType.BITFIELD:
+            print('received bitfield message')
+        elif msg_type == MessageType.REQUEST:
+            print('received request message')
+        elif msg_type == MessageType.PIECE:
+            self.new_pieces = True
+            print('received piece yay')
+        elif msg_type == MessageType.CANCEL:
+            print('received cancel message')
+        elif msg_type == MessageType.PORT:
+            print('received port message')
     
     #an infinite loop, that quits when done or on error. Should add a thread handle to self, so that it can be killed
     def start_exchanging_messages(self):
         print(f'started connection with {self.ip}')
         while self.is_active:
             msg = Message.from_socket(self.socket)
-            if msg.get_type() == MessageType.PIECE:
-                self.new_pieces = True
             self.handle_message(msg)
             
     def has_new_pieces(self):
