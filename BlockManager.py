@@ -33,6 +33,9 @@ class BlockManager:
 
     def add_block(self, block):
         pass
+    
+    def add_piece(self, piece):
+        pass
 
     def has_missing_pieces(self):
         return False in self.downloaded_pieces

@@ -20,9 +20,7 @@ class Torpy:
         
     #gets peers from self.tracker_response, opens a thread for each of them with a call to peer.connect
     def start_peer_wire_protocol(self):
-        #try:
         self.peer_manager   = PeerManager(self.tracker_response, self.parsed_metainfo_file)
-        #except KeyboardInterrupt:
-        #    print('quitting')
 
     
+
