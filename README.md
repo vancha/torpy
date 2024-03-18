@@ -35,4 +35,13 @@ The class that's responsible for piecing together all the data that we get from 
 
 ### Peer.py:
 The class that represents a remote peer. it has a port, an ip, and an id. when it is created, it automatically starts communicating with the remote peer it represents. Starting with an initial handshake, the exchange of messages begins through a call to start_exchanging_messages(). 
-The idea is that this message exchange will happen in a thread, so that all peers receive and send pieces and blocks in their own threads.
+which is called as an argument to a thread. All peers receive and send pieces and blocks in their own threads.
+
+___
+
+## How to use
+In order to start downloading a file, open your terminal and type:
+
+```
+python3 main.py location/to/torrent/file
+```

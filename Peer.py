@@ -1,21 +1,30 @@
 from Tracker import Tracker
 from threading import Thread
+from Message import Message
 import Constants
 import socket
 import ipaddress
 import urllib.parse
 
+'''
+This represents a peer in the torrent protocol. After a call to connect(), it will attempt to connect with the remote peer it represents, and it will start
+a thread that exchanges messages with the peer and this local torrent client.
+Once the peer receives a block/piece, it will store it, so that it can be retrieved by the peermanager, which will in turn add it to the blockmanager.
+'''
+
 class Peer:
     def __del__(self):
         try:
             self.socket.close()
+            print(f'closed the socket connection with {self.ip}')
         except:
             print('socket was already closed')
  
     def connect(self):
         if self.perform_handshake():
-            self.start_exchanging_messages()
-        self.is_active = False
+            self.run()
+        else:
+            self.is_active = False
     
     #file needed to get info hash, which is used for handshake
     def __init__(self, peer_ip, peer_id, peer_port,parsed_metainfo_file):
@@ -42,24 +51,23 @@ class Peer:
             response            = self.socket.recv(68)
             chars_before_hash   = len(pstrlen)+len(pstr)+len(reserved_bytes)
             their_hash          = response[chars_before_hash : chars_before_hash + len(self.info_hash)]
-            if their_hash == self.info_hash:
-                print('hashes match! connection started')
-            else:
+            if not their_hash == self.info_hash:
                 self.is_active = False
-                print('hashes dont match, something fishy going on here. disconnecting')
+            print(f'connected to {self.ip}')
+            return True
         except Exception as e:
-            print(f'handshake failed for {self.ip}: {e}') 
             return False
             
     def handle_message(self, msg):
-        pass
+        print(f'')
         #get msg type, depending on type, parse it's contents
+    
     
     #an infinite loop, that quits when done or on error. Should add a thread handle to self, so that it can be killed
     def start_exchanging_messages(self):
         print(f'started connection with {self.ip}')
         while self.is_active:
-            msg = self.get_message()
+            msg = Message.from_socket(self.socket)
             if msg.get_type() == MessageType.PIECE:
                 self.new_pieces = True
             self.handle_message(msg)
@@ -70,14 +78,19 @@ class Peer:
     #start thread that runs "start_exchanging messages"
     def run(self):
         if self.is_active:
-            self.thread_handle = Thread(target=start_exchanging_messages)
+            print(f'{self.ip} active, starting thread')
+            self.thread_handle = Thread(target=self.start_exchanging_messages)
             self.thread_handle.run()
+            print(f'thread started')
         else:
             print('peer not active, not running')
     
     #signals that we need to stop sending messages, kills the thread
     def quit(self):
         if self.is_active:
+            print(f'peer active, stopping')
             self.is_active = False
             self.thread_handle.join()
+        else:
+            print(f'cannot stop peer because peer not active')
 

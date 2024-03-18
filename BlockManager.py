@@ -27,9 +27,9 @@ class BlockManager:
         self.outstanding_requests   = []
         self.data = self.get_stored_pieces()
 
-    def requested(block):
+    #def requested(block):
         #update outstanding requests
-        pass
+    #    pass
 
     def add_block(self, block):
         pass

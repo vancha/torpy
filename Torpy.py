@@ -1,13 +1,20 @@
 from enum import Enum
-import Message
 from Tracker import Tracker, TrackerResponseType
 import bencodepy
 from PeerManager import PeerManager
 
-#Torrent client
+'''
+The main torrent client. This takes a torrent file, parses it, and creates the PeerManager. 
+it takes the following arguments:
+- metainfo_file_location (the actual torrent file to parse)
+- peer_id, this is the id with which we can represent ourself to the tracker and other peers
+
+after a call to the start_peer_wire_protocol has been made, a PeerManager will be created, and download will begin.
+
+'''
 class Torpy:
     #parses the metainfo file, returns the bdecoded results with all values as a dictionary
-    def parse_metainfo_file( metainfo_file_location):
+    def parse_metainfo_file(metainfo_file_location):
         file_handle = open(metainfo_file_location, "rb")
         try:
             return bencodepy.decode(file_handle.read())
