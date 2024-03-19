@@ -30,8 +30,9 @@ an instance of PeerManager.
 Holds the class PeerManager, which is conceptually responsible for keeping a list of peers, and creates an instance of a BlockManager. It should also keep this list of peers populated in case some peers are either not downloading, or for any other reason not active. To do so, it can request new peers from the tracker through the request_more_peers method.
 It periodically checks this list of peers, and sees if any of them have received new blocks/pieces. If so, it adds them to the blockmanager.
 
-### BlockManager.py:
-The class that's responsible for piecing together all the data that we get from the peers. This one resource should be shared between all Peers, so that peers can know which blocks we already have, and which blocks we still need. Once a peer gets data (pieces/blocks), it should be added to the BlockManager so that other peers are made aware of it too.
+### PieceManager.py:
+The class that's responsible for piecing together all the data that we get from the peers. This one resource should be shared between all Peers, so that peers can know which pieces we already have, and which pieces we still need. Once a peer gets data (which will be blocks: part of a piece), it should be added to the PieceManager so that other peers are made aware of it too.
+It's main job is to get individual blocks received by the peers, and turn them back in to pieces. If a full piece is completely downloaded, the piecemanager needs to verify it by checking it's  hash.
 
 ### Peer.py:
 The class that represents a remote peer. it has a port, an ip, and an id. when it is created, it automatically starts communicating with the remote peer it represents. Starting with an initial handshake, the exchange of messages begins through a call to start_exchanging_messages(). 
