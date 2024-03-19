@@ -10,8 +10,8 @@ it takes the following arguments:
 - peer_id, this is the id with which we can represent ourself to the tracker and other peers
 
 after a call to the start_peer_wire_protocol has been made, a PeerManager will be created, and download will begin.
-
 '''
+
 class Torpy:
     #parses the metainfo file, returns the bdecoded results with all values as a dictionary
     def parse_metainfo_file(metainfo_file_location):
