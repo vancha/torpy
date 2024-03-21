@@ -4,7 +4,9 @@ from Message import Message, MessageType
 import Constants
 import socket
 import ipaddress
+import struct
 import urllib.parse
+import time
 
 '''
 This represents a peer in the torrent protocol. After a call to connect(), it will attempt to connect with the remote peer it represents, and it will start
@@ -30,14 +32,14 @@ class Peer:
     
     #file needed to get info hash, which is used for handshake
     def __init__(self, peer_ip, peer_id, peer_port,parsed_metainfo_file):
-        self.is_active      = True
-        self.new_pieces     = False
-        self.has_pieces     = []
-        self.finished_blocks= []
-        self.ip             = ipaddress.ip_address(peer_ip)
-        self.id             = peer_id
-        self.port           = peer_port
-        self.info_hash      = Tracker.info_to_info_hash_bytes(parsed_metainfo_file[b'info'])
+        self.is_active          = True
+        self.new_pieces         = False
+        self.available_pieces   = []
+        self.finished_blocks    = []
+        self.ip                 = ipaddress.ip_address(peer_ip)
+        self.id                 = peer_id
+        self.port               = peer_port
+        self.info_hash          = Tracker.info_to_info_hash_bytes(parsed_metainfo_file[b'info'])
         
         #the mandatory state information to keep track of for peers
         self.peer_choking   = True
@@ -45,11 +47,7 @@ class Peer:
         self.am_choking     = True
         self.am_interested  = False
         self.connect()
-        
-    def request_piece(self, piece):
-        print(f'requesting piece {piece}')
-    #returns true on success, false otherwise. creates self.socket
-    
+
     def perform_handshake(self):
         pstrlen         = Constants.PSTRLEN
         pstr            = Constants.PSTR
@@ -72,7 +70,33 @@ class Peer:
             return True
         except Exception as e:
             return False
+            
+    def send_message(self, message):
+        if self.is_active:
+            self.socket.sendall(message)
+        else:
+            print(f'attempted to call socket on inactive client {self.ip}')
+    
+    
+    def send_unchoke_message(self):
+        print(f'sending unchoke message to {self.ip}')
+        unchoke_message = b'\x00\x00\x00\x01\x01'
+        self.send_message(unchoke_message)
 
+    def send_interested_message(self):
+        print(f'sending interested message to {self.ip}')
+        interested_message = b'\x00\x00\x00\x01\x02'
+        self.send_message(interested_message)
+    
+    
+    #should be called from peermanager, piecemanager should be what generates these blocks based on the piece that's available to the peer
+    def request_block(self, block):
+        print(f'requesting block {block.begin} on {self.ip}')
+        message = b'\x00\x00\x00\x0D\x06' + struct.pack(">I",block.index) +struct.pack(">I",block.begin)+ struct.pack(">I", block.length)
+        self.send_message(message)
+        time.sleep(0.5)
+
+    
     def handle_message(self, msg):
         msg_type = msg.get_type()
         
@@ -91,17 +115,17 @@ class Peer:
             print('peer not interested')
             self.peer_interested = False
         elif msg_type == MessageType.HAVE:
-            print(f'added piece {msg.payload}')
+            print(f'got HAVE, added piece {msg.payload}')
             #appends the index of the advertised piece to the "has pieces" field, useful for peermanager
-            self.has_pieces.append(msg.payload)
+            self.available_pieces.append(msg.payload)
         elif msg_type == MessageType.BITFIELD:
             print('received bitfield message')
         elif msg_type == MessageType.REQUEST:
             #ignore for now, we don't advertise having any pieces yet
             pass
         elif msg_type == MessageType.PIECE:
+            print('WATTAFACK I GOT PIECE ALREADY O.O')
             self.new_pieces = True
-            print('received piece yay')
         elif msg_type == MessageType.CANCEL:
             #ignore for now, not useful until later
             pass
@@ -109,9 +133,6 @@ class Peer:
             #ignore, also not useful for the time being
             pass
     
-    #
-    #def has_pieces(self):
-    #    return self.has_pieces
     
     #an infinite loop, that quits when done or on error. Should add a thread handle to self, so that it can be killed
     def start_exchanging_messages(self):
@@ -125,17 +146,15 @@ class Peer:
     #start thread that runs "start_exchanging messages"
     def run(self):
         if self.is_active:
+            self.send_unchoke_message()
+            self.send_interested_message()
             self.thread_handle = Thread(target=self.start_exchanging_messages)
             self.thread_handle.start()
-        else:
-            print('peer not active, not running')
     
     #signals that we need to stop sending messages, kills the thread
     def quit(self):
+        print(f'quitting {self.ip}')
         if self.is_active:
-            print(f'{self.ip} active, stopping')
             self.is_active = False
             self.thread_handle.join()
-        else:
-            print(f'cannot stop peer because peer not active')
 

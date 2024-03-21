@@ -40,29 +40,27 @@ class PeerManager:
                 peer.quit()
                 self.peer_list.remove(peer)
     
-    #makes sure we have enough peers so that we don't stall the download
-    def request_more_peers(self):
-        #if we are not exceeding the maximum number of requests within a timespan for our tracker, request more peers
-        print('requesting more peers')
-
     #the infinite loop that performs management of peers: keeping the number of peers up, removing inactive peers, adding peer pieces to piecemanager
     def run(self):
         try:
             while True:
                 if self.has_inactive_peers():
                     self.remove_inactive_peers()
-                    
-                if len(self.peer_list) < Constants.MAX_PEER_CONNECTIONS:
-                    self.request_more_peers()
                 
                 for peer in self.peer_list:
-                    for piece in peer.has_pieces:
-                        if self.piece_manager.misses_piece(piece):
-                            self.piece_manager.add_outstanding_request_for_piece(piece)
-                            peer.request_piece(piece)
+                    for piece_index in peer.available_pieces:
+                        if self.piece_manager.misses_piece(piece_index):
+                            self.piece_manager.add_outstanding_request_for_piece(piece_index)
+                            blocks = self.piece_manager.get_piece(piece_index).blocks
+                            for block in blocks:
+                                if not block.is_requested:
+                                    peer.request_block(block)
+                                    block.is_requested = True
+                                    peer.request_block(block)
+                        peer.available_pieces.remove(piece_index)
 
-                    for piece in peer.finished_blocks:
-                        self.piece_manager.add_block(piece)
+                    for block in peer.finished_blocks:
+                        self.piece_manager.update_pieces(block)
 
                 time.sleep(1)
                 
