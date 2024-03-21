@@ -48,7 +48,10 @@ class Block:
             self.is_complete = True
         else:
             self.is_complete = False
-    
+
+    def from_message(message):
+        return Block(message.index, message.begin, message.length, message.block)
+        
     def is_complete(self):
         return self.is_complete()
 

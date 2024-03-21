@@ -59,8 +59,14 @@ class Message:
         message_id          = data[0]
         self.type           = self.convert_message_id_to_type(message_id)
         self.length_prefix  = length_prefix
+        
         if self.type == MessageType.HAVE:
             self.payload        =  Utils.bytes_to_int(data[1:])
+        elif self.type == MessageType.PIECE:
+            self.index        = data[1]#Utils.bytes_to_int(data[1:])
+            self.begin        = data[2]#Utils.bytes_to_int(data[1:])
+            self.block        = data[3:]#pass
+            print(f'processed piece message')
         else:
             self.payload        =  data[1:]
         

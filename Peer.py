@@ -19,12 +19,10 @@ class Peer:
     def __del__(self):
         try:
             self.socket.close()
-            print(f'closed the socket connection with {self.ip}')
         except:
             print('socket was already closed')
  
     def connect(self):
-        print(f'attempting to perform handshake with {self.ip}')
         if self.perform_handshake():
             self.run()
         else:
@@ -40,6 +38,7 @@ class Peer:
         self.id                 = peer_id
         self.port               = peer_port
         self.info_hash          = Tracker.info_to_info_hash_bytes(parsed_metainfo_file[b'info'])
+        self.message_queue      = []
         
         #the mandatory state information to keep track of for peers
         self.peer_choking   = True
@@ -71,9 +70,12 @@ class Peer:
         except Exception as e:
             return False
             
-    def send_message(self, message):
+    def send_message(self):#, message):
         if self.is_active:
-            self.socket.sendall(message)
+            if not self.peer_choking and len(self.message_queue) > 0:
+                self.socket.sendall(self.message_queue.pop())
+            else:
+                print('cannot request, peer choking!')
         else:
             print(f'attempted to call socket on inactive client {self.ip}')
     
@@ -81,21 +83,22 @@ class Peer:
     def send_unchoke_message(self):
         print(f'sending unchoke message to {self.ip}')
         unchoke_message = b'\x00\x00\x00\x01\x01'
-        self.send_message(unchoke_message)
+        self.message_queue.append(unchoke_message)
 
     def send_interested_message(self):
         print(f'sending interested message to {self.ip}')
         interested_message = b'\x00\x00\x00\x01\x02'
-        self.send_message(interested_message)
+        self.message_queue.append(interested_message)
     
     
     #should be called from peermanager, piecemanager should be what generates these blocks based on the piece that's available to the peer
     def request_block(self, block):
-        print(f'requesting block {block.begin} on {self.ip}')
         message = b'\x00\x00\x00\x0D\x06' + struct.pack(">I",block.index) +struct.pack(">I",block.begin)+ struct.pack(">I", block.length)
-        self.send_message(message)
-        time.sleep(0.5)
+        self.message_queue.append(message)
 
+    def queue_block_requests(self, blocks):
+        for block in blocks:
+            self.request_block(block)
     
     def handle_message(self, msg):
         msg_type = msg.get_type()
@@ -124,7 +127,10 @@ class Peer:
             #ignore for now, we don't advertise having any pieces yet
             pass
         elif msg_type == MessageType.PIECE:
+            #if it's a piece message, it has an index
             print('WATTAFACK I GOT PIECE ALREADY O.O')
+            self.finished_blocks.append(Block.from_message(msg))
+            print('Block should be available in finished_blocks now!')
             self.new_pieces = True
         elif msg_type == MessageType.CANCEL:
             #ignore for now, not useful until later
@@ -139,6 +145,8 @@ class Peer:
         while self.is_active:
             msg = Message.from_socket(self.socket)
             self.handle_message(msg)
+            self.send_message()
+            time.sleep(1)
             
     def has_new_pieces(self):
         return self.new_pieces
@@ -146,8 +154,6 @@ class Peer:
     #start thread that runs "start_exchanging messages"
     def run(self):
         if self.is_active:
-            self.send_unchoke_message()
-            self.send_interested_message()
             self.thread_handle = Thread(target=self.start_exchanging_messages)
             self.thread_handle.start()
     

@@ -14,9 +14,7 @@ Also occasionally checks if peers have downloaded new blocks, and if so, adds th
 class PeerManager:
     def __init__(self, tracker_response, parsed_metainfo_file):
         self.piece_manager = PieceManager(parsed_metainfo_file)
-        print('creating peers')
         self.peer_list = [Peer(peer[b'ip'].decode('utf-8'), peer[b'peer id'], peer[b'port'], parsed_metainfo_file ) for peer in tracker_response[b'peers']]
-        print('calling peermanger.run')
         self.run()
         
     #useful if you want to know if we are still downloading
@@ -51,18 +49,16 @@ class PeerManager:
                     for piece_index in peer.available_pieces:
                         if self.piece_manager.misses_piece(piece_index):
                             self.piece_manager.add_outstanding_request_for_piece(piece_index)
-                            blocks = self.piece_manager.get_piece(piece_index).blocks
-                            for block in blocks:
-                                if not block.is_requested:
-                                    peer.request_block(block)
-                                    block.is_requested = True
-                                    peer.request_block(block)
-                        peer.available_pieces.remove(piece_index)
+                            peer.queue_block_requests(self.piece_manager.get_piece(piece_index).blocks)
+                            
+                            time.sleep(1)
+                        
 
                     for block in peer.finished_blocks:
                         self.piece_manager.update_pieces(block)
-
-                time.sleep(1)
+                        
+                    
+                
                 
         except KeyboardInterrupt:
             for peer in self.peer_list:
