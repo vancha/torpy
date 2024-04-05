@@ -92,6 +92,7 @@ if __name__ == "__main__":
                 send_handshake(sock, info_to_info_hash_bytes(parsed_metainfo_file[b'info']))
                 if not compare_hash(sock, info_to_urlencoded_info_hash(parsed_metainfo_file[b'info'])):
                     continue
+                print('handshaken')
                 
         except Exception as e:
             print(f'could not connect to {peer[0]} because {e}')
