@@ -65,7 +65,7 @@ def compare_hash(socket, info_hash):
         response            = socket.recv(68)
         chars_before_hash   = len(PSTRLEN)+len(PSTR)+len(bytes([0,0,0,0,0,0,0,0]))
         their_hash          = response[chars_before_hash : chars_before_hash + len(info_hash)]
-        
+        print(f'{their_hash} <- theirs\n{info_hash}<- ours\n\n')
         return their_hash == info_hash
     except Exception as e:
         return False
@@ -91,6 +91,7 @@ if __name__ == "__main__":
                 print('connected')
                 send_handshake(sock, info_to_info_hash_bytes(parsed_metainfo_file[b'info']))
                 if not compare_hash(sock, info_to_urlencoded_info_hash(parsed_metainfo_file[b'info'])):
+                    print('hashes dont match')
                     continue
                 print('handshaken')
                 
