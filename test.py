@@ -57,7 +57,7 @@ def send_tracker_request(parsed_metainfo_file):
             exit(f'Failed getting a proper response from the tracker: {e}')
 
 def send_handshake(socket, info_hash):
-        request         = PSTRLEN + PSTR + bytes([0,0,0,0,0,0,0,0]) + info_hash + Constants.PEER_ID.encode('utf-8')
+        request         = PSTRLEN + PSTR + bytes([0,0,0,0,0,0,0,0]) + info_hash + PEER_ID.encode('utf-8')
         socket.sendall(request)
 
 def compare_hash(socket, info_hash):
