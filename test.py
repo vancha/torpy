@@ -88,7 +88,7 @@ if __name__ == "__main__":
                 sock.settimeout(2)
                 sock.connect((str(peer[0]), peer[2]))
                 send_handshake(sock, info_to_info_hash_bytes(parsed_metainfo_file[b'info']))
-                if not compare_hash(sock, info_to_urlencoded_info_hash(parsed_metainfo_file[b'info'])):
+                if not compare_hash(sock, info_to_info_hash_bytes(parsed_metainfo_file[b'info'])):
                     print('hashes dont match')
                     continue
                 print('hashes match and connected')
