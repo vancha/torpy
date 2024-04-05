@@ -79,7 +79,7 @@ if __name__ == "__main__":
         try:
             #create the socket, set the timeout, and connect to the socket
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) if peer[0].version == 4 else socket.socket(socket.AF_INET6, socket.SOCK_STREAM) as sock:
-                sock.settimeout(60 * 2)
+                sock.settimeout(2)
                 print('set timeout')
                 sock.connect((str(peer[0]), peer[2]))
                 print('connected')
