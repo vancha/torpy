@@ -83,7 +83,7 @@ if __name__ == "__main__":
                 print('set timeout')
                 sock.connect((str(peer[0]), peer[2]))
                 print('connected')
-                send_handshake(sock)
+                send_handshake(sock, info_to_urlencoded_info_hash(parsed_metainfo_file[b'info']))
                 if not compare_hash(sock, info_to_urlencoded_info_hash(parsed_metainfo_file[b'info'])):
                     continue
                 
