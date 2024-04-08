@@ -103,23 +103,68 @@ if __name__ == "__main__":
                 if not compare_hash(sock, info_to_info_hash_bytes(parsed_metainfo_file[b'info'])):
                     continue
                 #here we are connected to the peer, we can start the peer wire protocol (when we are unchoked by the peer)
-                peer_choking = True
-                while peer_choking:
+                peer_choking    = True
+                am_interested   = False
+                am_choking      = True
+                
+                while True:
+                    while peer_choking:
+                        length_prefix = sock.recv(4)
+                        if not length_prefix:
+                            continue #this was likely a keepalive message
+                        length_prefix = int.from_bytes(length_prefix, byteorder='big')
+                        print(f'received prefix of {length_prefix}')
+                        message_payload = sock.recv(length_prefix)
+                        message_id  = message_payload[0]
+                        #unchoke
+                        message_id
+                        if message_id == b'\x01':
+                            print('unchoke received!')
+                            peer_choking = False
+                            continue
+                    
+                    print('sending interested message')
+                    send_interested_message()
+                    print('sending unchoke message to peer')
+                    send_unchoke_message()
+                    
+                    
                     length_prefix = sock.recv(4)
                     if not length_prefix:
                         continue #this was likely a keepalive message
-                    length_prefix = int.from_bytes(length_prefix, byteorder='big')
-                    print(f'received prefix of {length_prefix}')
+                        
+                    length_prefix   = int.from_bytes(length_prefix, byteorder='big')
                     message_payload = sock.recv(length_prefix)
-                    print(f'message id: {message_payload[0]}')
-                    if message_payload[0] == b'\x01':
-                        print('unchoke received!')
-                        peer_choking = False
+                    message_id      = message_payload[0]
+                    
+                    #choke
+                    if message_id == b'\x00':
+                        peer_choking = True
                         continue
-                print('sending interested message')
-                send_interested_message()
-                print('sending unchoke message to peer')
-                send_unchoke_message()
+                    #unchoke
+                    if message_id == b'\x01':
+                        #if peer was choking we would have gotten stuck in the previous while loop
+                        pass
+                    #interested
+                    if message_id == b'\x02':
+                        print('got interested message')
+                    #not interested
+                    if message_id == b'\x03':
+                        #do stuff
+                    #have
+                    if message_id == b'\x04':
+                        print('got have message')
+                    #bitfield
+                    if message_id == b'\x05':
+                        print('got bitfield message')
+                    #request
+                    if message_id == b'\x06':
+                        print('got request message')
+                    #piece
+                    if message_id == b'\x07':
+                        print('got piece message')
+                        
+                    
                 
         except Exception as e:
             print(f'could not connect to {peer[0]} because {e}')
