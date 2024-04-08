@@ -111,7 +111,8 @@ if __name__ == "__main__":
                     length_prefix = int.from_bytes(length_prefix, byteorder='big')
                     print(f'received prefix of {length_prefix}')
                     message_payload = sock.recv(length_prefix)
-                    if message_payload == b'\x01':
+                    print(f'message id: {message_payload[0]}')
+                    if message_payload[0] == b'\x01':
                         print('unchoke received!')
                         peer_choking = False
                         continue
