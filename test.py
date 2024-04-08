@@ -69,7 +69,19 @@ def compare_hash(socket, info_hash):
         return their_hash == info_hash
     except Exception as e:
         return False
-            
+
+#fixed_length no payload
+def send_interested_message(socket):
+    # Interested message (single byte with value 2)
+    interested_message = b'\x00\x00\x00\x01\x02'
+    socket.sendall(interested_message)
+
+def send_unchoke_message(socket):
+    # Not choking message (single byte with value 1)
+    not_choking_message = b'\x00\x00\x00\x01\x01'
+    socket.sendall(not_choking_message)
+
+
 if __name__ == "__main__":
     if len(sys.argv) <= 1:
         exit('Please call this program with a location to a torrent file as an argument.')
@@ -89,9 +101,24 @@ if __name__ == "__main__":
                 sock.connect((str(peer[0]), peer[2]))
                 send_handshake(sock, info_to_info_hash_bytes(parsed_metainfo_file[b'info']))
                 if not compare_hash(sock, info_to_info_hash_bytes(parsed_metainfo_file[b'info'])):
-                    print('hashes dont match')
                     continue
-                print('hashes match and connected')
+                #here we are connected to the peer, we can start the peer wire protocol (when we are unchoked by the peer)
+                peer_choking = True
+                while peer_choking:
+                    length_prefix = sock.recv(4)
+                    if not length_prefix:
+                        continue #this was likely a keepalive message
+                    length_prefix = int.from_bytes(length_prefix, byteorder='big')
+                    print(f'received prefix of {length_prefix}')
+                    message_payload = socket.recv(message_length)
+                    if message_payload == b'\x01':
+                        print('unchoke received!')
+                        peer_choking = False
+                        continue
+                print('sending interested message')
+                send_interested_message()
+                print('sending unchoke message to peer')
+                send_unchoke_message()
                 
         except Exception as e:
             print(f'could not connect to {peer[0]} because {e}')
