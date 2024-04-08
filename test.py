@@ -110,7 +110,7 @@ if __name__ == "__main__":
                         continue #this was likely a keepalive message
                     length_prefix = int.from_bytes(length_prefix, byteorder='big')
                     print(f'received prefix of {length_prefix}')
-                    message_payload = sock.recv(message_length)
+                    message_payload = sock.recv(length_prefix)
                     if message_payload == b'\x01':
                         print('unchoke received!')
                         peer_choking = False
