@@ -150,7 +150,7 @@ if __name__ == "__main__":
                         print('got interested message')
                     #not interested
                     if message_id == b'\x03':
-                        #do stuff
+                        print('got not interested message')
                     #have
                     if message_id == b'\x04':
                         print('got have message')
