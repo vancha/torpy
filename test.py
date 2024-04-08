@@ -71,15 +71,15 @@ def compare_hash(socket, info_hash):
         return False
 
 #fixed_length no payload
-def send_interested_message(socket):
+def send_interested_message(sock):
     # Interested message (single byte with value 2)
     interested_message = b'\x00\x00\x00\x01\x02'
-    socket.sendall(interested_message)
+    sock.sendall(interested_message)
 
-def send_unchoke_message(socket):
+def send_unchoke_message(sock):
     # Not choking message (single byte with value 1)
     not_choking_message = b'\x00\x00\x00\x01\x01'
-    socket.sendall(not_choking_message)
+    sock.sendall(not_choking_message)
 
 
 if __name__ == "__main__":
@@ -110,7 +110,7 @@ if __name__ == "__main__":
                         continue #this was likely a keepalive message
                     length_prefix = int.from_bytes(length_prefix, byteorder='big')
                     print(f'received prefix of {length_prefix}')
-                    message_payload = socket.recv(message_length)
+                    message_payload = sock.recv(message_length)
                     if message_payload == b'\x01':
                         print('unchoke received!')
                         peer_choking = False
