@@ -91,10 +91,11 @@ if __name__ == "__main__":
     parsed_metainfo_file    = parse_metainfo_file(metainfo_file_location)
     #request peers from tracker
     tracker_response       =  send_tracker_request(parsed_metainfo_file)
-    
+    print(f'response: {tracker_response}') 
     #try to connect with peers from list
     for peer in [(ipaddress.ip_address(peer[b'ip'].decode('utf-8')), peer[b'peer id'], peer[b'port'])  for peer in tracker_response[b'peers']]:
         try:
+            print(f'attempting to connect to {peer[0]}')
             #create the socket, set the timeout, and connect to the socket
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) if peer[0].version == 4 else socket.socket(socket.AF_INET6, socket.SOCK_STREAM) as sock:
                 sock.settimeout(10)
@@ -138,39 +139,41 @@ if __name__ == "__main__":
                     
                     length_prefix = sock.recv(4)
                     if not length_prefix:
+                        print('received keepalive, doing nothing')
                         continue #this was likely a keepalive message
                         
                     length_prefix   = int.from_bytes(length_prefix, byteorder='big')
                     message_payload = sock.recv(length_prefix)
+                    print(f'payload: {message_payload}')
                     message_id      = message_payload[0]
                     
+                    
                     #choke
-                    if message_id == b'\x00':
+                    if message_id == 0:#b'\x00':
                         peer_choking = True
                         continue
                     #unchoke
-                    if message_id == b'\x01':
+                    if message_id == 1:#b'\x01':
                         #if peer was choking we would have gotten stuck in the previous while loop
                         pass
                     #interested
-                    if message_id == b'\x02':
+                    if message_id == 2:#b'\x02':
                         print('got interested message')
                     #not interested
-                    if message_id == b'\x03':
+                    if message_id == 3:#b'\x03':
                         print('got not interested message')
                     #have
-                    if message_id == b'\x04':
+                    if message_id == 4:#b'\x04':
                         print('got have message')
                     #bitfield
-                    if message_id == b'\x05':
+                    if message_id == 5:#b'\x05':
                         print('got bitfield message')
                     #request
-                    if message_id == b'\x06':
+                    if message_id == 6:#b'\x06':
                         print('got request message')
                     #piece
-                    if message_id == b'\x07':
+                    if message_id == 7:#b'\x07':
                         print('got piece message')
-                        
                     
                 
         except Exception as e:
