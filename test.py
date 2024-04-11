@@ -125,10 +125,15 @@ if __name__ == "__main__":
                             peer_choking = False
                             continue
                     
-                    print('sending interested message')
-                    send_interested_message(sock)
-                    print('sending unchoke message to peer')
-                    send_unchoke_message(sock)
+                    if not am_interested:
+                        print('sending interested message')
+                        send_interested_message(sock)
+                        am_interested = True
+
+                    if am_choking:
+                        print('sending unchoke message to peer')
+                        send_unchoke_message(sock)
+                        am_choking = False
                     
                     
                     length_prefix = sock.recv(4)
