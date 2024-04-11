@@ -50,9 +50,9 @@ def send_tracker_request(parsed_metainfo_file):
         left            = parsed_metainfo_file[b'info'][b'length']
 
         request_url = f"{announce_url}?info_hash={info_hash}&peer_id={PEER_ID}&port={port}&uploaded={uploaded}&downloaded={downloaded}&left={left}&event=started"
-        
+        response = requests.get(request_url).content 
         try:
-            return bencodepy.decode(requests.get(request_url).content)
+            return bencodepy.decode(response)
         except Exception as e:
             exit(f'Failed getting a proper response from the tracker: {e}')
 
@@ -97,7 +97,7 @@ if __name__ == "__main__":
         try:
             #create the socket, set the timeout, and connect to the socket
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) if peer[0].version == 4 else socket.socket(socket.AF_INET6, socket.SOCK_STREAM) as sock:
-                sock.settimeout(60 * 2)
+                sock.settimeout(10)
                 sock.connect((str(peer[0]), peer[2]))
                 send_handshake(sock, info_to_info_hash_bytes(parsed_metainfo_file[b'info']))
                 if not compare_hash(sock, info_to_info_hash_bytes(parsed_metainfo_file[b'info'])):
@@ -115,18 +115,20 @@ if __name__ == "__main__":
                         length_prefix = int.from_bytes(length_prefix, byteorder='big')
                         print(f'received prefix of {length_prefix}')
                         message_payload = sock.recv(length_prefix)
+                        print('received as many bytes as listed in the prefix')
                         message_id  = message_payload[0]
+                        print(f'id of {message_id}')
                         #unchoke
                         message_id
-                        if message_id == b'\x01':
+                        if  message_id == 1:
                             print('unchoke received!')
                             peer_choking = False
                             continue
                     
                     print('sending interested message')
-                    send_interested_message()
+                    send_interested_message(sock)
                     print('sending unchoke message to peer')
-                    send_unchoke_message()
+                    send_unchoke_message(sock)
                     
                     
                     length_prefix = sock.recv(4)
